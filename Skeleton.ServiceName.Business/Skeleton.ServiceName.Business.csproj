@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>Skeleton.ServiceName.Business</RootNamespace>
+    <AssemblyName>Skeleton.ServiceName.Business</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Skeleton.ServiceName.Data\Skeleton.ServiceName.Data.csproj" />
+    <ProjectReference Include="..\Skeleton.ServiceName.Messages\Skeleton.ServiceName.Messages.csproj" />
+    <ProjectReference Include="..\Skeleton.ServiceName.ViewModel\Skeleton.ServiceName.ViewModel.csproj" />
+  </ItemGroup>
+
+</Project>

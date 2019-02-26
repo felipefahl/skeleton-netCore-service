@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>Skeleton.ServiceName.ViewModel</RootNamespace>
+    <AssemblyName>Skeleton.ServiceName.ViewModel</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Skeleton.ServiceName.Utils\Skeleton.ServiceName.Utils.csproj" />
+  </ItemGroup>
+
+</Project>
