@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
@@ -13,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Skeleton.ServiceName.API.Helpers;
 using Skeleton.ServiceName.Business.Implementations;
 using Skeleton.ServiceName.Business.Interfaces;
+using Skeleton.ServiceName.Business.Profiles;
 using Skeleton.ServiceName.Data;
 using Skeleton.ServiceName.Messages.Helpers;
 using Skeleton.ServiceName.Messages.Implementations;
@@ -40,6 +42,15 @@ namespace Skeleton.ServiceName.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+
+            // Auto Mapper Configurations
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new AutoMapperDomainProfile());
+            });
+
+            IMapper mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
 
             services.AddLocalization(options => options.ResourcesPath = "../Skeleton.ServiceName.Utils/Resources");
 
@@ -192,10 +203,11 @@ namespace Skeleton.ServiceName.API
             services.AddScoped<IPersonService, PersonService>(sp =>
             {
                 var person = sp.GetRequiredService<IRepository<Person>>();
+                var iMapper = sp.GetRequiredService<IMapper>();
                 var iServiceBus = sp.GetRequiredService<IServiceBus>();
                 var iApplicationInsights = sp.GetRequiredService<IApplicationInsights>();
 
-                return new PersonService(person, iServiceBus, iApplicationInsights);
+                return new PersonService(person, iMapper, iServiceBus, iApplicationInsights);
             });
         }
     }

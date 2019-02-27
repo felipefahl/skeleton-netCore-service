@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Skeleton.ServiceName.Business.Extensions;
+using AutoMapper;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Data;
 using Skeleton.ServiceName.Messages.Interfaces;
@@ -18,26 +16,29 @@ namespace Skeleton.ServiceName.Business.Implementations
     public class PersonService : IPersonService
     {
         private readonly IRepository<Person> _person;
+        private readonly IMapper _mapper;
         private readonly IServiceBus _serviceBus;
         private readonly IApplicationInsights _applicationInsights;
 
         private const string _stack = "PersonService";
 
-        public PersonService(IRepository<Person> person, 
+        public PersonService(IRepository<Person> person,
+                             IMapper mapper,
                              IServiceBus serviceBus,
                              IApplicationInsights applicationInsights)
         {
             _person = person;
+            _mapper = mapper;
             _serviceBus = serviceBus;
             _applicationInsights = applicationInsights;
         }
 
         public IList<PersonViewModel> All()
         {
-            var list = _person.All.ToList().ToViewList();
+            var list = _mapper.Map<IList<PersonViewModel>>(_person.All);
 
 
-            _applicationInsights.LogInformation("ENTROU", "PersonService/All");
+            //_applicationInsights.LogInformation("ENTROU", "PersonService/All");
 
             return list;
         }
@@ -58,14 +59,14 @@ namespace Skeleton.ServiceName.Business.Implementations
         public async Task<PersonViewModel> GetAsync(long id)
         {
             var person = await _person.FindAsync(id);
-            return person.ToView();
+            return _mapper.Map<PersonViewModel>(person);
         }
 
         public async Task<PersonViewModel> SaveAsync(PersonViewModel model)
         {
-            var person = model.ToPerson();
+            var person = _mapper.Map<Person>(model);
 
-            if(model.Id > 0)
+            if (model.Id > 0)
             {
                 await _person.UpdateAsync(person);
             }

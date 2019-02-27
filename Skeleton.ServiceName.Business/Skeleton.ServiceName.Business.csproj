@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Skeleton.ServiceName.Data\Skeleton.ServiceName.Data.csproj" />
     <ProjectReference Include="..\Skeleton.ServiceName.Messages\Skeleton.ServiceName.Messages.csproj" />
     <ProjectReference Include="..\Skeleton.ServiceName.ViewModel\Skeleton.ServiceName.ViewModel.csproj" />
