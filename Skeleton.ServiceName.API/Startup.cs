@@ -21,7 +21,11 @@ using Skeleton.ServiceName.Messages.Implementations;
 using Skeleton.ServiceName.Messages.Interfaces;
 using Skeleton.ServiceName.Utils;
 using Skeleton.ServiceName.Utils.Middlewares;
+using System;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Skeleton.ServiceName.API
@@ -200,14 +204,20 @@ namespace Skeleton.ServiceName.API
 
             //Interfaces - Sender Bus Messages
 
-            services.AddScoped<IPersonService, PersonService>(sp =>
+            //TODO: Implementar uma maneira de auto mapear todas as dependências
+            services.AddScoped(sp =>
             {
                 var person = sp.GetRequiredService<IRepository<Person>>();
                 var iMapper = sp.GetRequiredService<IMapper>();
                 var iServiceBus = sp.GetRequiredService<IServiceBus>();
                 var iApplicationInsights = sp.GetRequiredService<IApplicationInsights>();
 
-                return new PersonService(person, iMapper, iServiceBus, iApplicationInsights);
+                var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var serviceAssembly = Assembly.LoadFrom(Path.Combine(assemblyPath, "Skeleton.ServiceName.Business.dll"));
+
+                var serviceConcreteType = serviceAssembly.DefinedTypes.First(x => x.IsClass && !x.IsAbstract && x.ImplementedInterfaces.Contains(typeof(IPersonService)));
+                var serviceObject = (IPersonService)Activator.CreateInstance(serviceConcreteType, person, iMapper, iServiceBus, iApplicationInsights);
+                return serviceObject;
             });
         }
     }

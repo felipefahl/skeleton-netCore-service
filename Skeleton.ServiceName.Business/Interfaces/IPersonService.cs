@@ -1,4 +1,5 @@
-﻿using Skeleton.ServiceName.ViewModel.People;
+﻿using Skeleton.ServiceName.Data;
+using Skeleton.ServiceName.ViewModel.People;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,12 +7,8 @@ using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.Business.Interfaces
 {
-    public interface IPersonService
+    public interface IPersonService : IServiceCrud<Person, PersonViewModel>
     {
-        IList<PersonViewModel> All();
-        Task<PersonViewModel> GetAsync(long id);
         Task<PersonViewModel> SaveAsync(PersonViewModel model);
-        Task<bool> DeleteAsync(long id);
-
     }
 }
