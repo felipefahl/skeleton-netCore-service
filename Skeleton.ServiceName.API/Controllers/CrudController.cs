@@ -45,6 +45,7 @@ namespace Skeleton.ServiceName.API.Controllers
             {
                 var newModel = await _service.InsertAsync(model);
                 return Ok(newModel); //200
+                //TODO: Verificar uma forma de retornar a URL Created com a key do item inserido
                 //var uri = $"Get/{newModel.Id}";
                 //return Created(uri, newModel); //201
             }

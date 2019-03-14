@@ -197,28 +197,41 @@ namespace Skeleton.ServiceName.API
 
         private void ConfigureScope(IServiceCollection services)
         {
-            //DataBase
-            services.AddTransient<IRepository<Person>, Repository<Person>>();
+            var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            //Interfaces
+            //DataBase
+            services.AddTransient<IRepository<Person>, Repository<Person>>();//TODO: auto registrar repositórios
+
+            //Services
+            ConfigureServicesDI(services, assemblyPath);
 
             //Interfaces - Sender Bus Messages
+        }
 
-            //TODO: Implementar uma maneira de auto mapear todas as dependências
-            services.AddScoped(sp =>
+        /// <summary>
+        /// Method to auto register all services to the Dependency Injection
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="assemblyPath"></param>
+        private void ConfigureServicesDI(IServiceCollection services, string assemblyPath)
+        {
+            //recovers the service dll
+            var assembly = Assembly.LoadFrom(Path.Combine(assemblyPath, "Skeleton.ServiceName.Business.dll"));
+
+            //find all interfaces
+            var interfaceTypes = assembly.DefinedTypes.Where(x => x.IsInterface);
+            //find all concrete classes
+            var concreteTypes = assembly.DefinedTypes.Where(x => x.IsClass && !x.IsAbstract);
+
+            foreach (var interfaceType in interfaceTypes)
             {
-                var person = sp.GetRequiredService<IRepository<Person>>();
-                var iMapper = sp.GetRequiredService<IMapper>();
-                var iServiceBus = sp.GetRequiredService<IServiceBus>();
-                var iApplicationInsights = sp.GetRequiredService<IApplicationInsights>();
-
-                var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var serviceAssembly = Assembly.LoadFrom(Path.Combine(assemblyPath, "Skeleton.ServiceName.Business.dll"));
-
-                var serviceConcreteType = serviceAssembly.DefinedTypes.First(x => x.IsClass && !x.IsAbstract && x.ImplementedInterfaces.Contains(typeof(IPersonService)));
-                var serviceObject = (IPersonService)Activator.CreateInstance(serviceConcreteType, person, iMapper, iServiceBus, iApplicationInsights);
-                return serviceObject;
-            });
+                //for each interface, find the matching concrete implementation and register to the Dependency Injection
+                var concreteType = concreteTypes.FirstOrDefault(x => x.ImplementedInterfaces.Contains(interfaceType));
+                if (concreteType != null)
+                {
+                    services.AddScoped(interfaceType, concreteType);
+                }
+            }
         }
     }
 }
