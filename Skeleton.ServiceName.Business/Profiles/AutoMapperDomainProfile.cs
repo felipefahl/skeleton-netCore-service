@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Skeleton.ServiceName.Data;
+using Skeleton.ServiceName.Data.Models;
 using Skeleton.ServiceName.Utils.AutoMapper;
 using Skeleton.ServiceName.ViewModel.People;
 

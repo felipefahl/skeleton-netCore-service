@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Skeleton.ServiceName.Data
+namespace Skeleton.ServiceName.Data.Models
 {
     public class Person
     {

@@ -16,6 +16,7 @@ using Skeleton.ServiceName.Business.Implementations;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Business.Profiles;
 using Skeleton.ServiceName.Data;
+using Skeleton.ServiceName.Data.Models;
 using Skeleton.ServiceName.Messages.Helpers;
 using Skeleton.ServiceName.Messages.Implementations;
 using Skeleton.ServiceName.Messages.Interfaces;
@@ -200,7 +201,7 @@ namespace Skeleton.ServiceName.API
             var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
             //DataBase
-            services.AddTransient<IRepository<Person>, Repository<Person>>();//TODO: auto registrar repositórios
+            services.AddTransient(typeof(IRepository<>), typeof(Repository<>));//TODO: auto registrar repositórios
 
             //Services
             ConfigureServicesDI(services, assemblyPath);

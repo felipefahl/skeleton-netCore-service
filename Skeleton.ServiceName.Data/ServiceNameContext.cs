@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Skeleton.ServiceName.Data.Configuration;
+using Skeleton.ServiceName.Data.Models;
 
 namespace Skeleton.ServiceName.Data
 {

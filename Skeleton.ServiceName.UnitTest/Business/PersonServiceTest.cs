@@ -9,6 +9,7 @@ using System.Linq;
 using Skeleton.ServiceName.Messages.Interfaces;
 using AutoMapper;
 using Skeleton.ServiceName.ViewModel.People;
+using Skeleton.ServiceName.Data.Models;
 
 namespace Skeleton.ServiceName.UnitTest.Business
 {
@@ -38,7 +39,7 @@ namespace Skeleton.ServiceName.UnitTest.Business
             var fakePerson = GetFakePerson();
             var fakeModel = GetFakePersonViewModel();
 
-            _mapperMock.Setup(m => m.Map<PersonViewModel>(It.IsAny<Person>())).Returns(fakeModel);
+            _mapperMock.Setup(m => m.Map<Person, PersonViewModel>(It.IsAny<Person>())).Returns(fakeModel);
             _personRepositoryMock.Setup(x => x.FindAsync(It.IsAny<long>()))
                 .Returns(Task.FromResult(fakePerson));
 
@@ -58,7 +59,7 @@ namespace Skeleton.ServiceName.UnitTest.Business
             var fakePeople = GetFakePersonList();
             var fakeModelList = GetFakePersonViewModelList();
 
-            _mapperMock.Setup(m => m.Map<IList<PersonViewModel>>(It.IsAny<IQueryable<Person>>())).Returns(fakeModelList);
+            _mapperMock.Setup(m => m.Map<IEnumerable<Person>, IList<PersonViewModel>>(It.IsAny<IQueryable<Person>>())).Returns(fakeModelList);
 
             _personRepositoryMock.Setup(x => x.All)
                 .Returns(fakePeople);

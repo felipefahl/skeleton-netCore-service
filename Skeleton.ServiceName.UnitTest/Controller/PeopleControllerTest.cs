@@ -54,20 +54,20 @@ namespace Skeleton.ServiceName.UnitTest.Controller
             var newFakeModel = GetNewFakeViewModel();
 
 
-            _personServiceMok.Setup(x => x.SaveAsync(It.IsAny<PersonViewModel>()))
+            _personServiceMok.Setup(x => x.InsertAsync(It.IsAny<PersonViewModel>()))
                 .Returns(Task.FromResult(fakeModel));
 
             //Act
-            var result = await _peopleController.Insert(newFakeModel) as CreatedResult;
+            var result = await _peopleController.Insert(newFakeModel) as OkObjectResult;
 
             _peopleController.ControllerContext.HttpContext = _contextMock.Object;
             var actionResult = await _peopleController.Insert(newFakeModel);
 
             //Assert
 
-            Assert.Equal(result.StatusCode, (int)System.Net.HttpStatusCode.Created);
+            Assert.Equal(result.StatusCode, (int)System.Net.HttpStatusCode.OK);
             Assert.Equal(((PersonViewModel)result.Value).Id, id);
-            Assert.IsType<CreatedResult>(actionResult);
+            Assert.IsType<OkObjectResult>(actionResult);
         }
 
         [Fact]
@@ -79,7 +79,7 @@ namespace Skeleton.ServiceName.UnitTest.Controller
             var fakeModel = GetFakeViewModel();
 
 
-            _personServiceMok.Setup(x => x.SaveAsync(It.IsAny<PersonViewModel>()))
+            _personServiceMok.Setup(x => x.UpdateAsync(It.IsAny<PersonViewModel>()))
                 .Returns(Task.FromResult(fakeModel));
 
             //Act

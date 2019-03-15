@@ -1,13 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Skeleton.ServiceName.Business.Interfaces;
-using Skeleton.ServiceName.Data;
-using Skeleton.ServiceName.Utils.Exceptions;
-using Skeleton.ServiceName.Utils.Models;
+using Skeleton.ServiceName.Data.Models;
 using Skeleton.ServiceName.ViewModel.People;
-using System;
-using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.API.Controllers
 {
