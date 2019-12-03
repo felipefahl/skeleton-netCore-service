@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Data;
-using Skeleton.ServiceName.Messages.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,16 +8,14 @@ using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.Business.Implementations
 {
-    internal abstract class ServiceCrud<TEntity, TEntityViewModel> : ServiceBase, IServiceCrud<TEntity, TEntityViewModel> where TEntity : class
+    public abstract class ServiceCrud<TEntity, TEntityViewModel> : ServiceBase, IServiceCrud<TEntity, TEntityViewModel> where TEntity : class
                                                                                                                           where TEntityViewModel : class
     {
         protected readonly IRepository<TEntity> _repository;
 
         protected ServiceCrud(IRepository<TEntity> repository,
-                           IMapper mapper,
-                           IServiceBus serviceBus,
-                           IApplicationInsights applicationInsights)
-            :base(mapper, serviceBus, applicationInsights)
+                           IMapper mapper)
+            :base(mapper)
         {
             _repository = repository;
         }

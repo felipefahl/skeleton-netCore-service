@@ -1,17 +1,19 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Utils.Exceptions;
 using Skeleton.ServiceName.Utils.Models;
+using Skeleton.ServiceName.ViewModel.Base;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.API.Controllers
 {
+    [Authorize]
+    [Produces("application/json")]
     public abstract class CrudController<TEntity, TEntityViewModel> : ApiBaseController where TEntity : class
-                                                                                        where TEntityViewModel : class
+                                                                                        where TEntityViewModel : BaseViewModel
     {
         protected readonly IServiceCrud<TEntity, TEntityViewModel> _service;
 
@@ -23,19 +25,33 @@ namespace Skeleton.ServiceName.API.Controllers
         [HttpGet]
         public IActionResult ListAll()
         {
-            var list = _service.All();
-            return Ok(list);
+            try
+            {
+                var list = _service.All();
+                return Ok(list);
+            }
+            catch (Exception e)
+            {
+                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
+            }
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetAsync(int id)
         {
-            var model = await _service.GetAsync(id);
-            if (model == null)
+            try
             {
-                return NotFound();
+                var model = await _service.GetAsync(id);
+                if (model == null)
+                {
+                    return NotFound();
+                }
+                return Ok(model);
             }
-            return Ok(model);
+            catch (Exception e)
+            {
+                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
+            }
         }
 
         [HttpPost]
@@ -43,11 +59,16 @@ namespace Skeleton.ServiceName.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var newModel = await _service.InsertAsync(model);
-                return Ok(newModel); //200
-                //TODO: Verificar uma forma de retornar a URL Created com a key do item inserido
-                //var uri = $"Get/{newModel.Id}";
-                //return Created(uri, newModel); //201
+                try
+                {
+                    var newModel = await _service.InsertAsync(model);
+                    var uri = $"Get/{newModel.Id}";
+                    return Created(uri, newModel); //201
+                }
+                catch (Exception e)
+                {
+                    throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
+                }
             }
             throw new HttpStatusCodeException(StatusCodes.Status400BadRequest, ErrorResponse.FromModelStateError(ModelState));
         }
@@ -55,10 +76,18 @@ namespace Skeleton.ServiceName.API.Controllers
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] TEntityViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var updatedModel = await _service.UpdateAsync(model);
-                return Ok(updatedModel); //200
+                if (ModelState.IsValid)
+                {
+                    var updatedModel = await _service.UpdateAsync(model);
+                    return Ok(updatedModel); //200
+
+                }
+            }
+            catch (Exception e)
+            {
+                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
             }
             throw new HttpStatusCodeException(StatusCodes.Status400BadRequest, ErrorResponse.FromModelStateError(ModelState));
         }
@@ -66,11 +95,18 @@ namespace Skeleton.ServiceName.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            if (!await _service.DeleteAsync(id))
+            try
             {
-                return NotFound();
+                if (!await _service.DeleteAsync(id))
+                {
+                    return NotFound();
+                }
+                return NoContent(); //203
             }
-            return NoContent(); //203
+            catch (Exception e)
+            {
+                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
+            }
         }
     }
 }

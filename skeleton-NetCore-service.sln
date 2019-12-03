@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.329
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skeleton.ServiceName.API", "Skeleton.ServiceName.API\Skeleton.ServiceName.API.csproj", "{82E173D1-87C0-4E5A-8CD9-8F624BD55E57}"
 EndProject
@@ -10,10 +10,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skeleton.ServiceName.Business", "Skeleton.ServiceName.Business\Skeleton.ServiceName.Business.csproj", "{4EB215BD-B0A2-4584-AD27-820D404A0F4D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skeleton.ServiceName.ViewModel", "Skeleton.ServiceName.ViewModel\Skeleton.ServiceName.ViewModel.csproj", "{A63AF993-B5F6-4B52-8712-016737FB890E}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skeleton.ServiceName.UnitTest", "Skeleton.ServiceName.UnitTest\Skeleton.ServiceName.UnitTest.csproj", "{ADE51CC7-3860-4954-B17B-DF974A151026}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skeleton.ServiceName.Messages", "Skeleton.ServiceName.Messages\Skeleton.ServiceName.Messages.csproj", "{9FAFE191-CE6A-4AA7-9B56-2504B1C94D26}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skeleton.ServiceName.Utils", "Skeleton.ServiceName.Utils\Skeleton.ServiceName.Utils.csproj", "{424A1DBB-96ED-4724-BE73-54BF56D800F7}"
 EndProject
@@ -39,14 +35,6 @@ Global
 		{A63AF993-B5F6-4B52-8712-016737FB890E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A63AF993-B5F6-4B52-8712-016737FB890E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A63AF993-B5F6-4B52-8712-016737FB890E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ADE51CC7-3860-4954-B17B-DF974A151026}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADE51CC7-3860-4954-B17B-DF974A151026}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADE51CC7-3860-4954-B17B-DF974A151026}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADE51CC7-3860-4954-B17B-DF974A151026}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9FAFE191-CE6A-4AA7-9B56-2504B1C94D26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9FAFE191-CE6A-4AA7-9B56-2504B1C94D26}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9FAFE191-CE6A-4AA7-9B56-2504B1C94D26}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9FAFE191-CE6A-4AA7-9B56-2504B1C94D26}.Release|Any CPU.Build.0 = Release|Any CPU
 		{424A1DBB-96ED-4724-BE73-54BF56D800F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{424A1DBB-96ED-4724-BE73-54BF56D800F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{424A1DBB-96ED-4724-BE73-54BF56D800F7}.Release|Any CPU.ActiveCfg = Release|Any CPU

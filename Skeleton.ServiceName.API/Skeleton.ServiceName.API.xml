@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Skeleton.ServiceName.API</name>
+    </assembly>
+    <members>
+        <member name="M:Skeleton.ServiceName.API.Startup.ConfigureServicesDI(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String)">
+            <summary>
+            Method to auto register all services to the Dependency Injection
+            </summary>
+            <param name="services"></param>
+            <param name="assemblyPath"></param>
+        </member>
+        <member name="M:Skeleton.ServiceName.API.Startup.ConfigureRepositoriesDI(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String)">
+            <summary>
+            Method to auto register all services to the Dependency Injection
+            </summary>
+            <param name="services"></param>
+            <param name="assemblyPath"></param>
+        </member>
+    </members>
+</doc>

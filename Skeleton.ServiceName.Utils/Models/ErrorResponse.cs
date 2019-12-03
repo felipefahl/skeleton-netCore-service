@@ -6,6 +6,7 @@ namespace Skeleton.ServiceName.Utils.Models
 {
     public class ErrorResponse
     {
+        public bool Success { get; set; }
         public int Code { get; set; }
         public string Message { get; set; }
         public string[] Details { get; set; }
@@ -19,6 +20,7 @@ namespace Skeleton.ServiceName.Utils.Models
             }
             return new ErrorResponse
             {
+                Success = false,
                 Code = e.HResult,
                 Message = e.Message,
                 InnerError = ErrorResponse.From(e.InnerException)
@@ -30,6 +32,7 @@ namespace Skeleton.ServiceName.Utils.Models
             var errors = modelState.Values.SelectMany(v => v.Errors);
             return new ErrorResponse
             {
+                Success = false,
                 Code = 100,
                 Message = Global.RequestValidationError,
                 Details = errors.Select(e => e.ErrorMessage).ToArray(),

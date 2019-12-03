@@ -13,15 +13,25 @@ namespace Skeleton.ServiceName.Data.Configuration
             builder.HasKey(c => c.Id);
 
             builder.Property(c => c.FirstName)
-                .HasColumnType("nvarchar(100)")
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(255);
 
             builder.Property(c => c.LastName)
-                .HasColumnType("nvarchar(100)")
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(255);
 
             builder.Property(c => c.BirthDate)
                 .IsRequired();
+
+            builder.Property(c => c.UserCreated)
+                .HasMaxLength(255);
+
+            builder.Property(c => c.UserModified)
+                .HasMaxLength(255);
+
+            builder.Property(c => c.Active)
+                .IsRequired()
+                .HasDefaultValue(true);
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -9,21 +9,20 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
-using Skeleton.ServiceName.API.Helpers;
-using Skeleton.ServiceName.Business.Implementations;
-using Skeleton.ServiceName.Business.Interfaces;
+using Microsoft.OpenApi.Models;
 using Skeleton.ServiceName.Business.Profiles;
 using Skeleton.ServiceName.Data;
-using Skeleton.ServiceName.Data.Models;
-using Skeleton.ServiceName.Messages.Helpers;
-using Skeleton.ServiceName.Messages.Implementations;
-using Skeleton.ServiceName.Messages.Interfaces;
 using Skeleton.ServiceName.Utils;
 using Skeleton.ServiceName.Utils.Middlewares;
+using Skeleton.ServiceName.Utils.Models;
+using Skeleton.ServiceName.Utils.Security;
+using Swashbuckle.AspNetCore.Swagger;
 using System;
-using System.Globalization;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -33,7 +32,7 @@ namespace Skeleton.ServiceName.API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment env)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
             CurrentEnvironment = env;
@@ -41,12 +40,13 @@ namespace Skeleton.ServiceName.API
 
         public IConfiguration Configuration { get; }
 
-        private IHostingEnvironment CurrentEnvironment { get; set; }
+        private IWebHostEnvironment CurrentEnvironment { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+            //services.AddApplicationInsightsTelemetry(Configuration);
 
             // Auto Mapper Configurations
             var mappingConfig = new MapperConfiguration(mc =>
@@ -59,11 +59,21 @@ namespace Skeleton.ServiceName.API
 
             services.AddLocalization(options => options.ResourcesPath = "../Skeleton.ServiceName.Utils/Resources");
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+            services.AddMvc()
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization();
 
-            services.Configure<ApiBehaviorOptions>(options => {
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    var serializerOptions = options.JsonSerializerOptions;
+                    serializerOptions.IgnoreNullValues = true;
+                    serializerOptions.IgnoreReadOnlyProperties = true;
+                    serializerOptions.WriteIndented = true;
+                });
+
+            services.Configure<ApiBehaviorOptions>(options =>
+            {
                 options.SuppressModelStateInvalidFilter = true;
             });
 
@@ -74,63 +84,37 @@ namespace Skeleton.ServiceName.API
                 o.DefaultApiVersion = new ApiVersion(1, 0);
             });
 
-
-            services.AddDbContext<ServiceNameContext>(options =>
-            {
-                options.UseMySql(Configuration.GetConnectionString("DataBase"));
-            });
-
-            ConfigureEventBus(services);
-            ConfigureApplicationInsights(services);
-
             ConfigureAuthService(services);
+            ConfigureDatabase(services);
             ConfigureScope(services);
-        }
-
-        private void ConfigureApplicationInsights(IServiceCollection services)
-        {
-            // Ativando o Application Insights
-            services.AddApplicationInsightsTelemetry(Configuration);
-
-            var applicationInsightsSettings = new ApplicationInsightsSettings();
-            new ConfigureFromConfigurationOptions<ApplicationInsightsSettings>(
-                Configuration.GetSection("ApplicationInsightsSettings"))
-                    .Configure(applicationInsightsSettings);
-            services.AddSingleton(applicationInsightsSettings);
-
-            services.AddSingleton<IApplicationInsights, ApplicationInsights>(sp =>
-            {
-                return new ApplicationInsights(applicationInsightsSettings);
-            });
+            ConfigureSwagger(services);
         }
 
         private void ConfigureAuthService(IServiceCollection services)
         {
+            // Configurando a dependência para a classe de validação
+            // de credenciais e geração de tokens
 
-            // configure strongly typed settings objects
-            var appSettingsSection = Configuration.GetSection("AppSettings");
-            services.Configure<AppSettings>(appSettingsSection);
-            
-            // configure jwt authentication
-            var appSettings = appSettingsSection.Get<AppSettings>();
-            var key = Encoding.ASCII.GetBytes(appSettings.Secret);
-            services.AddAuthentication(x =>
+            var tokenConfigurations = new TokenConfigurations();
+            new ConfigureFromConfigurationOptions<TokenConfigurations>(
+                Configuration.GetSection("TokenConfigurations"))
+                    .Configure(tokenConfigurations);
+            services.AddSingleton(tokenConfigurations);
+
+
+            var signingConfigurations = new SigningConfigurations(tokenConfigurations.Secret);
+            services.AddSingleton(signingConfigurations);
+
+            services.AddSingleton<IAccessManager, AccessManager>(sp =>
             {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(x =>
-            {
-                x.RequireHttpsMetadata = false;
-                x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
-                };
+
+                return new AccessManager(signingConfigurations, tokenConfigurations);
             });
+
+            // Aciona a extensão que irá configurar o uso de
+            // autenticação e autorização via tokens
+            services.AddJwtSecurity(
+                signingConfigurations, tokenConfigurations);
 
             if (CurrentEnvironment.EnvironmentName == "Development")
             {
@@ -139,26 +123,22 @@ namespace Skeleton.ServiceName.API
                     opts.Filters.Add(new AllowAnonymousFilter());
                 });
             }
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
-        private void ConfigureEventBus(IServiceCollection services)
+        public virtual void ConfigureDatabase(IServiceCollection services)
         {
-            var serviceBusConfigurations = new ServiceBusSettings();
-            new ConfigureFromConfigurationOptions<ServiceBusSettings>(
-                Configuration.GetSection("ServiceBusConfigurations"))
-                    .Configure(serviceBusConfigurations);
-            services.AddSingleton(serviceBusConfigurations);
-
-            services.AddSingleton<IServiceBus, ServiceBus>(sp =>
-            {
-                var iApplicationInsights = sp.GetRequiredService<IApplicationInsights>();
-
-                return new ServiceBus(serviceBusConfigurations, iApplicationInsights);
-            });
+            services.AddDbContext<ServiceNameContext>(options =>
+                options.UseInMemoryDatabase("InMemoryDatabase"));
+            //services.AddEntityFrameworkSqlServer()
+            //    .AddDbContext<ServiceNameContext>(
+            //        options => options.UseSqlServer(
+            //            Configuration.GetConnectionString("DataBase")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -183,30 +163,41 @@ namespace Skeleton.ServiceName.API
                 // UI strings that we have localized.
                 SupportedUICultures = supportedCultures
             });
-            
+
             // global cors policy
             app.UseCors(x => x
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader());
 
-            app.UseAuthentication();
-
             app.UseHttpsRedirection();
-            app.UseMvc();
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+
+            // Ativando middlewares para uso do Swagger
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Skeleton API");
+            });
         }
 
         private void ConfigureScope(IServiceCollection services)
         {
             var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            //DataBase
-            services.AddTransient(typeof(IRepository<>), typeof(Repository<>));//TODO: auto registrar repositórios
-
             //Services
             ConfigureServicesDI(services, assemblyPath);
 
-            //Interfaces - Sender Bus Messages
+            //Data
+            ConfigureRepositoriesDI(services, assemblyPath);
         }
 
         /// <summary>
@@ -233,6 +224,91 @@ namespace Skeleton.ServiceName.API
                     services.AddScoped(interfaceType, concreteType);
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to auto register all services to the Dependency Injection
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="assemblyPath"></param>
+        private void ConfigureRepositoriesDI(IServiceCollection services, string assemblyPath)
+        {
+            //recovers the service dll
+            var assembly = Assembly.LoadFrom(Path.Combine(assemblyPath, "Skeleton.ServiceName.Data.dll"));
+
+            //find all interfaces
+            var interfaceTypes = assembly.DefinedTypes.Where(x => x.IsInterface);
+            //find all concrete classes
+            var concreteTypes = assembly.DefinedTypes.Where(x => x.IsClass && !x.IsAbstract);
+
+            foreach (var interfaceType in interfaceTypes)
+            {
+                //for each interface, find the matching concrete implementation and register to the Dependency Injection
+                var concreteType = concreteTypes.FirstOrDefault(x => x.ImplementedInterfaces.Contains(interfaceType));
+                if (concreteType != null)
+                {
+                    services.AddScoped(interfaceType, concreteType);
+                }
+            }
+        }
+
+        private void ConfigureSwagger(IServiceCollection services)
+        {
+            // Configurando o serviço de documentação do Swagger
+            services.AddSwaggerGen(c =>
+            {
+                // Swagger 2.+ support
+                var security = new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Scheme = "oauth2",
+                            Name = "Bearer",
+                            In = ParameterLocation.Header,
+
+                        },
+                        new List<string>()
+                    }
+                };
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+                c.AddSecurityRequirement(security);
+
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Skeleton API",
+                    Version = "v1",
+                    Description = "Net Core API 3.0 Skeleton - v1.0.1",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Pecege",
+                        Url = new Uri("https://fahl.com")
+                    }
+                });
+
+
+                string caminhoAplicacao =
+                    PlatformServices.Default.Application.ApplicationBasePath;
+                string nomeAplicacao =
+                    PlatformServices.Default.Application.ApplicationName;
+                string caminhoXmlDoc =
+                    Path.Combine(caminhoAplicacao, $"{nomeAplicacao}.xml");
+
+                c.IncludeXmlComments(caminhoXmlDoc);
+            });
         }
     }
 }
