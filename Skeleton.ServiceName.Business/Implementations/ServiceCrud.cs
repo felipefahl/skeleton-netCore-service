@@ -27,7 +27,7 @@ namespace Skeleton.ServiceName.Business.Implementations
             return list;
         }
 
-        public async Task<TEntityViewModel> InsertAsync(TEntityViewModel model)
+        public virtual async Task<TEntityViewModel> InsertAsync(TEntityViewModel model)
         {
             var entity = _mapper.Map<TEntity>(model);
 
@@ -36,7 +36,7 @@ namespace Skeleton.ServiceName.Business.Implementations
             return _mapper.Map<TEntityViewModel>(entity);
         }
 
-        public async Task<TEntityViewModel> UpdateAsync(TEntityViewModel model)
+        public virtual async Task<TEntityViewModel> UpdateAsync(TEntityViewModel model)
         {
             var entity = _mapper.Map<TEntity>(model);
 
@@ -45,7 +45,7 @@ namespace Skeleton.ServiceName.Business.Implementations
             return _mapper.Map<TEntityViewModel>(entity);
         }
 
-        public async Task<bool> DeleteAsync(long id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
             var entity = await _repository.FindAsync(id);
             if (entity == null)
@@ -58,7 +58,7 @@ namespace Skeleton.ServiceName.Business.Implementations
             return true;
         }
 
-        public async Task<TEntityViewModel> GetAsync(long id)
+        public async Task<TEntityViewModel> GetAsync(Guid id)
         {
             var entity = await _repository.FindAsync(id);
             return _mapper.Map<TEntity, TEntityViewModel>(entity);

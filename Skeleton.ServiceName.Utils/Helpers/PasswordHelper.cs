@@ -27,7 +27,7 @@ namespace Skeleton.ServiceName.Utils.Helpers
 
         public static bool Compare(string password, string passwordChek) => password == passwordChek;
 
-        public static (bool Verified, bool NeedsUpgrade) Verify(string hash, string password)
+        public static bool Verify(string hash, string password)
         {
             var parts = hash.Split('.', 3);
 
@@ -41,8 +41,6 @@ namespace Skeleton.ServiceName.Utils.Helpers
             var salt = Convert.FromBase64String(parts[1]);
             var key = Convert.FromBase64String(parts[2]);
 
-            var needsUpgrade = iterations != Iterations;
-
             using (var algorithm = new Rfc2898DeriveBytes(
               password,
               salt,
@@ -53,7 +51,7 @@ namespace Skeleton.ServiceName.Utils.Helpers
 
                 var verified = keyToCheck.SequenceEqual(key);
 
-                return (verified, needsUpgrade);
+                return verified;
             }
         }
     }

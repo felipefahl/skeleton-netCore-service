@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.API.Controllers
 {
-    [Authorize]
     [Produces("application/json")]
     public abstract class CrudController<TEntity, TEntityViewModel> : ApiBaseController where TEntity : class
                                                                                         where TEntityViewModel : BaseViewModel
@@ -37,7 +36,7 @@ namespace Skeleton.ServiceName.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetAsync(int id)
+        public async Task<IActionResult> GetAsync(Guid id)
         {
             try
             {
@@ -93,7 +92,7 @@ namespace Skeleton.ServiceName.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             try
             {

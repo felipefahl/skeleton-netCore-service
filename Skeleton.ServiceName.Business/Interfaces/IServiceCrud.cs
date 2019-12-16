@@ -9,9 +9,9 @@ namespace Skeleton.ServiceName.Business.Interfaces
                                                              where TEntityViewModel : class
     {
         IList<TEntityViewModel> All();
-        Task<TEntityViewModel> GetAsync(long id);
+        Task<TEntityViewModel> GetAsync(Guid id);
         Task<TEntityViewModel> InsertAsync(TEntityViewModel model);
         Task<TEntityViewModel> UpdateAsync(TEntityViewModel model);
-        Task<bool> DeleteAsync(long id);
+        Task<bool> DeleteAsync(Guid id);
     }
 }

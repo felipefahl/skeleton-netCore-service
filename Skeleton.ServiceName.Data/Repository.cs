@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace Skeleton.ServiceName.Data
 {
     public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        private readonly ServiceNameContext _context;
+        protected readonly ServiceNameContext _context;
 
         public Repository(ServiceNameContext context)
         {
@@ -27,7 +28,7 @@ namespace Skeleton.ServiceName.Data
             _context.SaveChanges();
         }
 
-        public TEntity Find(long key)
+        public TEntity Find(Guid key)
         {
             return _context.Find<TEntity>(key);
         }
@@ -50,7 +51,7 @@ namespace Skeleton.ServiceName.Data
             await _context.SaveChangesAsync();
         }
 
-        public async Task<TEntity> FindAsync(long key)
+        public async Task<TEntity> FindAsync(Guid key)
         {
             return await _context.FindAsync<TEntity>(key);
         }
@@ -59,6 +60,13 @@ namespace Skeleton.ServiceName.Data
         {
             _context.Set<TEntity>().AddRange(obj);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<TEntity> FindNoTrackingAsync(Guid key)
+        {
+            var entity = await _context.Set<TEntity>().FindAsync(key);
+            _context.Entry(entity).State = EntityState.Detached;
+            return entity;
         }
     }
 }

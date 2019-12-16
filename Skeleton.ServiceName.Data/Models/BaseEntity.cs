@@ -7,7 +7,7 @@ namespace Skeleton.ServiceName.Data.Models
     public abstract class BaseEntity
     {
         public Guid Id { get; set; }
-        public bool? Active { get; set; }
+        public bool Active { get; set; }
 
         public DateTime? DateCreated { get; set; }
         public string UserCreated { get; set; }

@@ -34,7 +34,7 @@ namespace Skeleton.ServiceName.Utils.Security
 
             DateTime dataCriacao = DateTime.Now;
             DateTime dataExpiracao = dataCriacao +
-                TimeSpan.FromHours(_tokenConfigurations.Seconds);
+                TimeSpan.FromSeconds(_tokenConfigurations.Seconds);
 
             var handler = new JwtSecurityTokenHandler();
             var securityToken = handler.CreateToken(new SecurityTokenDescriptor

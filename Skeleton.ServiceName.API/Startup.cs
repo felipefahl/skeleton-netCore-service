@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -12,35 +11,30 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Skeleton.ServiceName.Business.Profiles;
 using Skeleton.ServiceName.Data;
+using Skeleton.ServiceName.Data.Interfaces;
 using Skeleton.ServiceName.Utils;
 using Skeleton.ServiceName.Utils.Middlewares;
 using Skeleton.ServiceName.Utils.Models;
 using Skeleton.ServiceName.Utils.Security;
-using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Skeleton.ServiceName.API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IWebHostEnvironment env)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            CurrentEnvironment = env;
         }
 
         public IConfiguration Configuration { get; }
-
-        private IWebHostEnvironment CurrentEnvironment { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -64,6 +58,7 @@ namespace Skeleton.ServiceName.API
                 .AddDataAnnotationsLocalization();
 
             services.AddControllers()
+                .AddNewtonsoftJson()
                 .AddJsonOptions(options =>
                 {
                     var serializerOptions = options.JsonSerializerOptions;
@@ -84,13 +79,13 @@ namespace Skeleton.ServiceName.API
                 o.DefaultApiVersion = new ApiVersion(1, 0);
             });
 
-            ConfigureAuthService(services);
             ConfigureDatabase(services);
+            ConfigureServiceNameService(services);
             ConfigureScope(services);
             ConfigureSwagger(services);
         }
 
-        private void ConfigureAuthService(IServiceCollection services)
+        private void ConfigureServiceNameService(IServiceCollection services)
         {
             // Configurando a dependência para a classe de validação
             // de credenciais e geração de tokens
@@ -116,14 +111,6 @@ namespace Skeleton.ServiceName.API
             services.AddJwtSecurity(
                 signingConfigurations, tokenConfigurations);
 
-            if (CurrentEnvironment.EnvironmentName == "Development")
-            {
-                services.AddMvc(opts =>
-                {
-                    opts.Filters.Add(new AllowAnonymousFilter());
-                });
-            }
-
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
@@ -137,9 +124,31 @@ namespace Skeleton.ServiceName.API
             //            Configuration.GetConnectionString("DataBase")));
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        private static void UpdateDatabase(IApplicationBuilder app)
         {
+            using (var serviceScope = app.ApplicationServices
+                .GetRequiredService<IServiceScopeFactory>()
+                      .CreateScope())
+            {
+                using (var context = serviceScope.ServiceProvider.GetService<ServiceNameContext>())
+                {
+                    context.Database.Migrate();
+                }
+            }
+        }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ServiceNameContext context, IUserRepository userRepository)
+        {
+
+
+            if (env.EnvironmentName != "Test")
+            {
+                //UpdateDatabase(app);
+                new UserInitializer(context, userRepository)
+                    .Initialize();
+            }
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -174,6 +183,7 @@ namespace Skeleton.ServiceName.API
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

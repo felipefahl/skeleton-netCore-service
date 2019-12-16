@@ -2,21 +2,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Data.Models;
-using Skeleton.ServiceName.ViewModel.People;
+using Skeleton.ServiceName.ViewModel.User;
 
 namespace Skeleton.ServiceName.API.Controllers
 {
     [Authorize]
     [ApiVersion("1.0")]
     [Produces("application/json")]
-    public class PeopleController : CrudController<Person, PersonViewModel>
+    public class UsersController : CrudController<User, UserViewModel>
     {
-        private new readonly IPersonService _service;
-
-        public PeopleController(IPersonService personService)
-            :base(personService)
+        private new readonly IUserService _service;
+        public UsersController(IUserService service) : base(service)
         {
-            _service = personService;
+            _service = service;
         }
     }
 }

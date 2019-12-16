@@ -14,6 +14,7 @@ namespace Skeleton.ServiceName.Data
     public class ServiceNameContext : DbContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+        public DbSet<User> Users { get; set; }
         public DbSet<Person> People { get; set; }
 
         public ServiceNameContext(DbContextOptions<ServiceNameContext> options, IHttpContextAccessor httpContextAccessor)
@@ -33,7 +34,8 @@ namespace Skeleton.ServiceName.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //base.OnModelCreating(modelBuilder);
-            modelBuilder.ApplyConfiguration<Person>(new PersonConfiguration());
+            modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new PersonConfiguration());
         }
 
         public override int SaveChanges()

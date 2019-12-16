@@ -117,13 +117,22 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="FirstName" xml:space="preserve">
-    <value>First Name</value>
-  </data>
   <data name="Required" xml:space="preserve">
     <value>{0} is required.</value>
   </data>
   <data name="RequestValidationError" xml:space="preserve">
     <value>Error(s) in request validation</value>
+  </data>
+  <data name="IsInvalid" xml:space="preserve">
+    <value>{0} is invalid.</value>
+  </data>
+  <data name="PasswordDoesNotMatch" xml:space="preserve">
+    <value>Password does not match.</value>
+  </data>
+  <data name="EmailAlreadyRegistered" xml:space="preserve">
+    <value>Email already registered.</value>
+  </data>
+  <data name="EmailAndPasswordInvalid" xml:space="preserve">
+    <value>Invalid email and password</value>
   </data>
 </root>
