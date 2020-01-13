@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Data.Interfaces;
 using Skeleton.ServiceName.Data.Models;
+using Skeleton.ServiceName.Utils.EfExtensions;
 using Skeleton.ServiceName.Utils.Helpers;
 using Skeleton.ServiceName.Utils.Resources;
 using Skeleton.ServiceName.Utils.Security;
@@ -54,7 +55,7 @@ namespace Skeleton.ServiceName.Business.Implementations
                 .All
                 .Where(x => x.Email == model.Email)
                 .Where(x => x.Id != model.Id)
-                .ToListAsync();
+                .ToListAsyncSafe();
 
             if (user.Any())
                 throw new Exception(Global.EmailAlreadyRegistered);

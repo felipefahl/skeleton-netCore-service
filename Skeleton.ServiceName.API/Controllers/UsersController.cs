@@ -6,7 +6,7 @@ using Skeleton.ServiceName.ViewModel.User;
 
 namespace Skeleton.ServiceName.API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Master")]
     [ApiVersion("1.0")]
     [Produces("application/json")]
     public class UsersController : CrudController<User, UserViewModel>

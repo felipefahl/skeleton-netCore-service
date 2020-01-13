@@ -1,172 +1,142 @@
-﻿using Moq;
+﻿using AutoMapper;
+using NSubstitute;
 using Skeleton.ServiceName.Business.Implementations;
-using Skeleton.ServiceName.Data;
+using Skeleton.ServiceName.Business.Interfaces;
+using Skeleton.ServiceName.Business.Profiles;
+using Skeleton.ServiceName.Data.Interfaces;
+using Skeleton.ServiceName.Data.Models;
+using Skeleton.ServiceName.MockData.Classes;
+using Skeleton.ServiceName.ViewModel.People;
 using System;
-using System.Threading.Tasks;
-using Xunit;
 using System.Collections.Generic;
 using System.Linq;
-using Skeleton.ServiceName.Messages.Interfaces;
-using AutoMapper;
-using Skeleton.ServiceName.ViewModel.People;
-using Skeleton.ServiceName.Data.Models;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace Skeleton.ServiceName.UnitTest.Business
 {
     public class PersonServiceTest
     {
-        private readonly Mock<IRepository<Person>> _personRepositoryMock;
-        private readonly Mock<IMapper> _mapperMock;
-        private readonly Mock<IServiceBus> _serviceBusMock;
-        private readonly Mock<IApplicationInsights> _applicationInsightsMock;
+        private readonly IPersonRepository _repositoryMock;
 
-        private readonly PersonService _personService;
+        private readonly IPersonService _personService;
 
         public PersonServiceTest()
         {
-            _personRepositoryMock = new Mock<IRepository<Person>>();
-            _mapperMock = new Mock<IMapper>();
-            _serviceBusMock = new Mock<IServiceBus>();
-            _applicationInsightsMock = new Mock<IApplicationInsights>();
-            _personService = new PersonService(_personRepositoryMock.Object, _mapperMock.Object, _serviceBusMock.Object, _applicationInsightsMock.Object);
+            var myProfile = new AutoMapperDomainProfile();
+            var configuration = new MapperConfiguration(cfg => cfg.AddProfile(myProfile));
+            var mapper = new Mapper(configuration);
+
+            _repositoryMock = Substitute.For<IPersonRepository>();
+            _personService = new PersonService(_repositoryMock, mapper);
+        }
+
+        #region Get
+
+        [Fact]
+        public void Person_All()
+        {
+            // Arrange
+            var listFake = PersonMock.ListPerson().AsQueryable();
+            _repositoryMock.All.Returns(listFake);
+
+            // Act
+            var list = _personService.All();
+
+            // Assert
+            Assert.Equal(2, list.Count);
+            Assert.IsType<List<PersonViewModel>>(list);
         }
 
         [Fact]
-        public async Task Get_person_success()
+        public async Task Person_GetAsync()
         {
-            //Arrange
-            var id = 1;
-            var fakePerson = GetFakePerson();
-            var fakeModel = GetFakePersonViewModel();
+            // Arrange
+            var id = Guid.NewGuid();
+            var fake = PersonMock.GetPerson(id);
 
-            _mapperMock.Setup(m => m.Map<Person, PersonViewModel>(It.IsAny<Person>())).Returns(fakeModel);
-            _personRepositoryMock.Setup(x => x.FindAsync(It.IsAny<long>()))
-                .Returns(Task.FromResult(fakePerson));
+            _repositoryMock.FindAsync(id).Returns(fake);
 
-            //Act
-            var returnedPerson = await _personService.GetAsync(id);
+            // Act
+            var user = await _personService.GetAsync(id);
 
-            //Assert
-            Assert.Equal(fakePerson.Id, returnedPerson.Id);
-            Assert.Equal(fakeModel, returnedPerson);
-            Assert.IsType<PersonViewModel>(returnedPerson);
+            // Assert
+            Assert.Equal(id, user.Id);
+            Assert.IsType<PersonViewModel>(user);
+        }
+        #endregion
+
+        #region Insert
+        //Insert
+        [Fact]
+        public async Task Person_Insert_SuccessAsync()
+        {
+            // Arrange
+            var newViewFake = PersonMock.NewPersonViewModel();
+
+            // Act
+            var user = await _personService.InsertAsync(newViewFake);
+
+            // Assert
+            await _repositoryMock.Received().InsertAsync(Arg.Any<Person>());
+            Assert.IsType<PersonViewModel>(user);
+        }
+
+        #endregion
+
+        #region Update
+        [Fact]
+        public async Task Person_Update_SuccessAsync()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var viewFake = PersonMock.GetPersonViewModel(id);
+
+            viewFake.FirstName = "Alterou";
+
+            // Act
+            var user = await _personService.UpdateAsync(viewFake);
+
+            // Assert
+            await _repositoryMock.Received().UpdateAsync(Arg.Any<Person>());
+            Assert.Equal(id, user.Id);
+            Assert.IsType<PersonViewModel>(user);
+        }
+
+        #endregion
+
+        #region Delete
+        [Fact]
+        public async Task Person_Delete_SuccessAsync()
+        {
+            // Arrange
+            var count = 0;
+            var id = Guid.NewGuid();
+            var fake = PersonMock.GetPerson(id);
+            _repositoryMock.FindAsync(id).Returns(fake);
+            _repositoryMock.When(x => x.DeleteAsync(fake)).Do(x => count++);
+
+            // Act
+            var done = await _personService.DeleteAsync(id);
+
+            // Assert
+            Assert.True(done);
+            Assert.Equal(1, count);
         }
 
         [Fact]
-        public void Get_all_people_success()
+        public async Task Person_Delete_NotFoundAsync()
         {
-            //Arrange
-            var fakePeople = GetFakePersonList();
-            var fakeModelList = GetFakePersonViewModelList();
+            // Arrange
+            var id = Guid.NewGuid();
 
-            _mapperMock.Setup(m => m.Map<IEnumerable<Person>, IList<PersonViewModel>>(It.IsAny<IQueryable<Person>>())).Returns(fakeModelList);
+            // Act
+            var done = await _personService.DeleteAsync(id);
 
-            _personRepositoryMock.Setup(x => x.All)
-                .Returns(fakePeople);
-
-            //Act
-            var returnedList = _personService.All();
-
-            //Assert
-            Assert.Equal(fakeModelList.Count(), returnedList.Count());
-            Assert.Equal(fakeModelList, returnedList);
-            Assert.IsType<List<PersonViewModel>>(returnedList);
+            // Assert
+            Assert.False(done);
+            await _repositoryMock.DidNotReceive().DeleteAsync(Arg.Any<Person>());
         }
-
-        private Person GetFakePerson()
-        {
-            return new Person()
-            {
-                Id = 1,
-                FirstName = "First Name",
-                LastName = "Last Name",
-                BirthDate = new DateTime(1985, 11, 5)
-            };
-        }
-
-        private PersonViewModel GetFakePersonViewModel()
-        {
-            return new PersonViewModel()
-            {
-                Id = 1,
-                FirstName = "First Name",
-                LastName = "Last Name",
-                BirthDate = new DateTime(1985, 11, 5)
-            };
-        }
-
-        private IQueryable<Person> GetFakePersonList()
-        {
-            var list = new List<Person>()
-            {
-                 new Person()
-                {
-                    Id = 1,
-                    FirstName = "First Name 1",
-                    LastName = "Last Name 1",
-                    BirthDate = new DateTime(1985, 11, 1)
-                },
-                 new Person()
-                {
-                    Id = 2,
-                    FirstName = "First Name 2",
-                    LastName = "Last Name 2",
-                    BirthDate = new DateTime(1985, 11, 2)
-                },
-                 new Person()
-                {
-                    Id = 3,
-                    FirstName = "First Name 3",
-                    LastName = "Last Name 3",
-                    BirthDate = new DateTime(1985, 11, 3)
-                },
-                 new Person()
-                {
-                    Id = 4,
-                    FirstName = "First Name 4",
-                    LastName = "Last Name 4",
-                    BirthDate = new DateTime(1985, 11, 4)
-                }
-
-            };
-            return list.AsQueryable();
-        }
-
-        private IList<PersonViewModel> GetFakePersonViewModelList()
-        {
-            var list = new List<PersonViewModel>()
-            {
-                 new PersonViewModel()
-                {
-                    Id = 1,
-                    FirstName = "First Name 1",
-                    LastName = "Last Name 1",
-                    BirthDate = new DateTime(1985, 11, 1)
-                },
-                 new PersonViewModel()
-                {
-                    Id = 2,
-                    FirstName = "First Name 2",
-                    LastName = "Last Name 2",
-                    BirthDate = new DateTime(1985, 11, 2)
-                },
-                 new PersonViewModel()
-                {
-                    Id = 3,
-                    FirstName = "First Name 3",
-                    LastName = "Last Name 3",
-                    BirthDate = new DateTime(1985, 11, 3)
-                },
-                 new PersonViewModel()
-                {
-                    Id = 4,
-                    FirstName = "First Name 4",
-                    LastName = "Last Name 4",
-                    BirthDate = new DateTime(1985, 11, 4)
-                }
-
-            };
-            return list;
-        }
+        #endregion
     }
 }

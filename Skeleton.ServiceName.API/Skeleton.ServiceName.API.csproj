@@ -40,4 +40,6 @@
     <ProjectReference Include="..\Skeleton.ServiceName.Business\Skeleton.ServiceName.Business.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
 </Project>
