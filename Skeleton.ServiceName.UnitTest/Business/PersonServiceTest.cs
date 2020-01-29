@@ -2,6 +2,7 @@
 using NSubstitute;
 using Skeleton.ServiceName.Business.Implementations;
 using Skeleton.ServiceName.Business.Interfaces;
+using Skeleton.ServiceName.Business.Parameters;
 using Skeleton.ServiceName.Business.Profiles;
 using Skeleton.ServiceName.Data.Interfaces;
 using Skeleton.ServiceName.Data.Models;
@@ -37,11 +38,12 @@ namespace Skeleton.ServiceName.UnitTest.Business
         public void Person_All()
         {
             // Arrange
+            var parameters = new PersonParameters();
             var listFake = PersonMock.ListPerson().AsQueryable();
             _repositoryMock.All.Returns(listFake);
 
             // Act
-            var list = _personService.All();
+            var list = _personService.All(parameters);
 
             // Assert
             Assert.Equal(2, list.Count);
@@ -91,6 +93,9 @@ namespace Skeleton.ServiceName.UnitTest.Business
             // Arrange
             var id = Guid.NewGuid();
             var viewFake = PersonMock.GetPersonViewModel(id);
+            var fake = PersonMock.GetPerson(id);
+
+            _repositoryMock.FindNoTrackingAsync(id).Returns(fake);
 
             viewFake.FirstName = "Alterou";
 

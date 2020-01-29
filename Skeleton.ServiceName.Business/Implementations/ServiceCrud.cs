@@ -1,15 +1,18 @@
 ﻿using AutoMapper;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Data;
+using Skeleton.ServiceName.Data.Models;
+using Skeleton.ServiceName.Utils.EfExtensions;
+using Skeleton.ServiceName.Utils.Models;
+using Skeleton.ServiceName.ViewModel.Base;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.Business.Implementations
 {
-    public abstract class ServiceCrud<TEntity, TEntityViewModel> : ServiceBase, IServiceCrud<TEntity, TEntityViewModel> where TEntity : class
-                                                                                                                          where TEntityViewModel : class
+    public abstract class ServiceCrud<TEntity, TEntityViewModel> : ServiceBase, IServiceCrud<TEntity, TEntityViewModel> where TEntity : BaseEntity
+                                                                                                                          where TEntityViewModel : BaseViewModel
     {
         protected readonly IRepository<TEntity> _repository;
 
@@ -20,9 +23,10 @@ namespace Skeleton.ServiceName.Business.Implementations
             _repository = repository;
         }
 
-        public IList<TEntityViewModel> All()
+        public virtual IList<TEntityViewModel> All(QueryStringParameters queryStringParameters)
         {
-            var list = _mapper.Map<IEnumerable<TEntity>, IList<TEntityViewModel>>(_repository.All);
+            var query = _repository.All.Paged(queryStringParameters.PageNumber, queryStringParameters.PageSize);
+            var list = _mapper.Map<IEnumerable<TEntity>, IList<TEntityViewModel>>(query);
 
             return list;
         }
@@ -38,7 +42,18 @@ namespace Skeleton.ServiceName.Business.Implementations
 
         public virtual async Task<TEntityViewModel> UpdateAsync(TEntityViewModel model)
         {
+            var oldEntity = await _repository.FindNoTrackingAsync((Guid)model.Id);
+
+            if (oldEntity == null)
+            {
+                return null;
+            }
+
+
             var entity = _mapper.Map<TEntity>(model);
+
+            entity.DateCreated = oldEntity.DateCreated;
+            entity.UserCreated = oldEntity.UserCreated;
 
             await _repository.UpdateAsync(entity);
 
@@ -62,6 +77,11 @@ namespace Skeleton.ServiceName.Business.Implementations
         {
             var entity = await _repository.FindAsync(id);
             return _mapper.Map<TEntity, TEntityViewModel>(entity);
+        }
+
+        public async Task<long> CountAsync()
+        {
+            return await _repository.CountAsync();
         }
     }
 }

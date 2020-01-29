@@ -11,12 +11,14 @@ namespace Skeleton.ServiceName.Data
         void Insert(params TEntity[] obj);
         void Update(params TEntity[] obj);
         void Delete(params TEntity[] obj);
+        long Count();
 
         Task<TEntity> FindAsync(Guid key);
         Task<TEntity> FindNoTrackingAsync(Guid key);
         Task InsertAsync(params TEntity[] obj);
         Task UpdateAsync(params TEntity[] obj);
         Task DeleteAsync(params TEntity[] obj);
+        Task<long> CountAsync();
 
     }
 }

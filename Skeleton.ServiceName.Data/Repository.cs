@@ -39,6 +39,11 @@ namespace Skeleton.ServiceName.Data
             _context.SaveChanges();
         }
 
+        public long Count()
+        {
+            return _context.Set<TEntity>().LongCount();
+        }
+
         public async Task UpdateAsync(params TEntity[] obj)
         {
             _context.Set<TEntity>().UpdateRange(obj);
@@ -62,10 +67,17 @@ namespace Skeleton.ServiceName.Data
             await _context.SaveChangesAsync();
         }
 
+        public async Task<long> CountAsync()
+        {
+            return await _context.Set<TEntity>().LongCountAsync();
+        }
+
         public async Task<TEntity> FindNoTrackingAsync(Guid key)
         {
             var entity = await _context.Set<TEntity>().FindAsync(key);
-            _context.Entry(entity).State = EntityState.Detached;
+            if (entity != null)
+                _context.Entry(entity).State = EntityState.Detached;
+
             return entity;
         }
     }

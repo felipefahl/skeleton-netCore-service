@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using NSubstitute;
 using Skeleton.ServiceName.Business.Implementations;
+using Skeleton.ServiceName.Business.Parameters;
 using Skeleton.ServiceName.Business.Profiles;
 using Skeleton.ServiceName.Data.Interfaces;
 using Skeleton.ServiceName.Data.Models;
@@ -42,12 +43,13 @@ namespace Skeleton.ServiceName.UnitTest.Business
         public void User_AllAsync()
         {
             // Arrange
+            var parameters = new UserParameters();
             var listFake = UserMock.ListUser().AsQueryable();
             var listVewFake = UserMock.ListUserViewModel();
             _repositoryMock.All.Returns(listFake);
 
             // Act
-            var list = _userService.All();
+            var list = _userService.All(parameters);
 
             // Assert
             Assert.Equal(listVewFake.Count, list.Count);

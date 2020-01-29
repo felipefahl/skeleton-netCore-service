@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Utils.Exceptions;
 using Skeleton.ServiceName.Utils.Models;
@@ -22,11 +23,16 @@ namespace Skeleton.ServiceName.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult ListAll()
+        public async virtual Task<IActionResult> ListAll([FromQuery] QueryStringParameters queryStringParameters)
         {
             try
             {
-                var list = _service.All();
+                var count = await _service.CountAsync();
+                var list = _service.All(queryStringParameters);
+
+                var metadata = new MetadataPagination(count, queryStringParameters.PageNumber, queryStringParameters.PageSize);
+
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
                 return Ok(list);
             }
             catch (Exception e)

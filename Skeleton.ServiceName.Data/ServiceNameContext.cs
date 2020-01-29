@@ -64,11 +64,6 @@ namespace Skeleton.ServiceName.Data
                     ((BaseEntity)entity.Entity).DateCreated = DateTimeHelper.BrazilNow;
                     ((BaseEntity)entity.Entity).UserCreated = userId;
                 }
-                else
-                {
-                    ((BaseEntity)entity.Entity).DateCreated = ((BaseEntity)entity.Entity).DateCreated;
-                    ((BaseEntity)entity.Entity).UserCreated = ((BaseEntity)entity.Entity).UserCreated;
-                }
 
                 ((BaseEntity)entity.Entity).DateModified = DateTimeHelper.BrazilNow;
                 ((BaseEntity)entity.Entity).UserModified = userId;

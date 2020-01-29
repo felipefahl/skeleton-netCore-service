@@ -41,6 +41,26 @@ namespace Skeleton.ServiceName.IntegrationTest.API
 
         [Theory]
         [InlineData("GET", "1")]
+        public async Task PersonGetAll_FirstPage_TestAsync(string method, string version)
+        {
+            // Arrange
+            var request = new HttpRequestMessage(new HttpMethod(method), $"/api/v{version}/People/?pageNumber=2&pageSize=1");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _tokenMaster);
+
+            // Act
+            var response = await _client.SendAsync(request);
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var responseList = JsonConvert.DeserializeObject<IList<PersonViewModel>>(await response.Content.ReadAsStringAsync());
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(1, responseList.Count);
+            Assert.IsType<List<PersonViewModel>>(responseList);
+        }
+
+        [Theory]
+        [InlineData("GET", "1")]
         public async Task PersonGetAll_Unauthorized_TestAsync(string method, string version)
         {
             // Arrange
