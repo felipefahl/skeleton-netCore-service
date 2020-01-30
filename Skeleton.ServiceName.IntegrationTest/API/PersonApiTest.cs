@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Skeleton.ServiceName.Business.Parameters;
 using Skeleton.ServiceName.MockData.Classes;
 using Skeleton.ServiceName.ViewModel.People;
 using System;
@@ -44,7 +45,33 @@ namespace Skeleton.ServiceName.IntegrationTest.API
         public async Task PersonGetAll_FirstPage_TestAsync(string method, string version)
         {
             // Arrange
-            var request = new HttpRequestMessage(new HttpMethod(method), $"/api/v{version}/People/?pageNumber=2&pageSize=1");
+
+            var pageNumber = 2;
+            var pageSize = 1;
+            var request = new HttpRequestMessage(new HttpMethod(method), $"/api/v{version}/People/?pageNumber={pageNumber}&pageSize={pageSize}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _tokenMaster);
+
+            // Act
+            var response = await _client.SendAsync(request);
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var responseList = JsonConvert.DeserializeObject<IList<PersonViewModel>>(await response.Content.ReadAsStringAsync());
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(1, responseList.Count);
+            Assert.IsType<List<PersonViewModel>>(responseList);
+        }
+
+        [Theory]
+        [InlineData("GET", "1")]
+        public async Task PersonGetAll_Filter_TestAsync(string method, string version)
+        {
+            // Arrange
+
+            var name = "2";
+
+            var request = new HttpRequestMessage(new HttpMethod(method), $"/api/v{version}/People/?name={name}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _tokenMaster);
 
             // Act

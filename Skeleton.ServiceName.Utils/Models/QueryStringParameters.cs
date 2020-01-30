@@ -1,4 +1,6 @@
-﻿namespace Skeleton.ServiceName.Utils.Models
+﻿using System.Collections.Generic;
+
+namespace Skeleton.ServiceName.Utils.Models
 {
 	public class QueryStringParameters
 	{
