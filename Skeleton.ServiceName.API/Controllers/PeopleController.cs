@@ -5,10 +5,8 @@ using Newtonsoft.Json;
 using Skeleton.ServiceName.Business.Interfaces;
 using Skeleton.ServiceName.Business.Parameters;
 using Skeleton.ServiceName.Data.Models;
-using Skeleton.ServiceName.Utils.Exceptions;
 using Skeleton.ServiceName.Utils.Models;
 using Skeleton.ServiceName.ViewModel.People;
-using System;
 using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.API.Controllers
@@ -21,7 +19,7 @@ namespace Skeleton.ServiceName.API.Controllers
         private new readonly IPersonService _service;
 
         public PeopleController(IPersonService personService)
-            :base(personService)
+            : base(personService)
         {
             _service = personService;
         }
@@ -29,25 +27,18 @@ namespace Skeleton.ServiceName.API.Controllers
         [HttpGet]
         public override async Task<IActionResult> ListAll([FromQuery] QueryStringParameters queryStringParameters)
         {
-            try
-            {
-                var serializedParent = JsonConvert.SerializeObject(queryStringParameters);
-                var personParameter = JsonConvert.DeserializeObject<PersonParameters>(serializedParent);
+            var serializedParent = JsonConvert.SerializeObject(queryStringParameters);
+            var personParameter = JsonConvert.DeserializeObject<PersonParameters>(serializedParent);
 
-                personParameter.Name = HttpContext.Request.Query["Name"].ToString();
+            personParameter.Name = HttpContext.Request.Query["Name"].ToString();
 
-                var count = await _service.CountAsync(personParameter);
-                var list = _service.All(personParameter);
+            var count = await _service.CountAsync(personParameter);
+            var list = _service.All(personParameter);
 
-                var metadata = new MetadataPagination(count, queryStringParameters.PageNumber, queryStringParameters.PageSize);
+            var metadata = new MetadataPagination(count, queryStringParameters.PageNumber, queryStringParameters.PageSize);
 
-                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
-                return Ok(list);
-            }
-            catch (Exception e)
-            {
-                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
-            }
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            return Ok(list);
         }
     }
 }

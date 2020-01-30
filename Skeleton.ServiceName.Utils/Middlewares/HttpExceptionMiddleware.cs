@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Skeleton.ServiceName.Utils.Exceptions;
 using System;
-using System.Net;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.Utils.Middlewares
@@ -37,6 +36,22 @@ namespace Skeleton.ServiceName.Utils.Middlewares
                 context.Response.Clear();
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = ex.ContentType;
+
+                await context.Response.WriteAsync(ex.Message);
+
+                return;
+            }
+            catch (ValidationException ex)
+            {
+                if (context.Response.HasStarted)
+                {
+                    _logger.LogWarning("The response has already started, the http status code middleware will not be executed.");
+                    throw;
+                }
+
+                context.Response.Clear();
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                context.Response.ContentType = @"application/json";
 
                 await context.Response.WriteAsync(ex.Message);
 

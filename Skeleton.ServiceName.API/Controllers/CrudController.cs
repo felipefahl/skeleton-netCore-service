@@ -24,93 +24,58 @@ namespace Skeleton.ServiceName.API.Controllers
         [HttpGet]
         public async virtual Task<IActionResult> ListAll([FromQuery] QueryStringParameters queryStringParameters)
         {
-            try
-            {
-                var count = await _service.CountAsync();
-                var list = _service.All(queryStringParameters);
+            var count = await _service.CountAsync();
+            var list = _service.All(queryStringParameters);
 
-                var metadata = new MetadataPagination(count, queryStringParameters.PageNumber, queryStringParameters.PageSize);
+            var metadata = new MetadataPagination(count, queryStringParameters.PageNumber, queryStringParameters.PageSize);
 
-                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
-                return Ok(list);
-            }
-            catch (Exception e)
-            {
-                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
-            }
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            return Ok(list);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAsync(Guid id)
         {
-            try
+            var model = await _service.GetAsync(id);
+            if (model == null)
             {
-                var model = await _service.GetAsync(id);
-                if (model == null)
-                {
-                    return NotFound();
-                }
-                return Ok(model);
+                return NotFound();
             }
-            catch (Exception e)
-            {
-                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
-            }
+            return Ok(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> Insert([FromBody] TEntityViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    var newModel = await _service.InsertAsync(model);
-                    var uri = $"Get/{newModel.Id}";
-                    return Created(uri, newModel); //201
-                }
-                catch (Exception e)
-                {
-                    throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
-                }
+                throw new HttpStatusCodeException(StatusCodes.Status400BadRequest, ErrorResponse.FromModelStateError(ModelState));
             }
-            throw new HttpStatusCodeException(StatusCodes.Status400BadRequest, ErrorResponse.FromModelStateError(ModelState));
+
+            var newModel = await _service.InsertAsync(model);
+            var uri = $"Get/{newModel.Id}";
+            return Created(uri, newModel); //201-
         }
 
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] TEntityViewModel model)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (ModelState.IsValid)
-                {
-                    var updatedModel = await _service.UpdateAsync(model);
-                    return Ok(updatedModel); //200
-
-                }
+                throw new HttpStatusCodeException(StatusCodes.Status400BadRequest, ErrorResponse.FromModelStateError(ModelState));
             }
-            catch (Exception e)
-            {
-                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
-            }
-            throw new HttpStatusCodeException(StatusCodes.Status400BadRequest, ErrorResponse.FromModelStateError(ModelState));
+            var updatedModel = await _service.UpdateAsync(model);
+            return Ok(updatedModel); //200
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            try
+            if (!await _service.DeleteAsync(id))
             {
-                if (!await _service.DeleteAsync(id))
-                {
-                    return NotFound();
-                }
-                return NoContent(); //203
+                return NotFound();
             }
-            catch (Exception e)
-            {
-                throw new HttpStatusCodeException(StatusCodes.Status500InternalServerError, ErrorResponse.From(e));
-            }
+            return NoContent(); //203
         }
     }
 }
