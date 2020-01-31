@@ -166,7 +166,7 @@ namespace Skeleton.ServiceName.IntegrationTest.API
             // Arrange
             var request = new HttpRequestMessage(new HttpMethod(method), $"/api/v{version}/People/");
             var person = PersonMock.NewPersonViewModel();
-            person.FirstName = "";
+            person.FirstName = null;
 
             request.Content = new StringContent(JsonConvert.SerializeObject(person), Encoding.UTF8, "application/json");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _tokenMaster);

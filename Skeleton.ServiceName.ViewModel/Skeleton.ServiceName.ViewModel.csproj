@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" Version="8.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Skeleton.ServiceName.Utils\Skeleton.ServiceName.Utils.csproj" />
   </ItemGroup>
 

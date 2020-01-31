@@ -1,11 +1,14 @@
 ﻿using AutoMapper;
+using Newtonsoft.Json;
 using NSubstitute;
 using Skeleton.ServiceName.Business.Implementations;
+using Skeleton.ServiceName.Business.Interfaces.Validations;
 using Skeleton.ServiceName.Business.Parameters;
 using Skeleton.ServiceName.Business.Profiles;
 using Skeleton.ServiceName.Data.Interfaces;
 using Skeleton.ServiceName.Data.Models;
 using Skeleton.ServiceName.MockData.Classes;
+using Skeleton.ServiceName.Utils.Exceptions;
 using Skeleton.ServiceName.Utils.Helpers;
 using Skeleton.ServiceName.Utils.Models;
 using Skeleton.ServiceName.Utils.Resources;
@@ -23,6 +26,7 @@ namespace Skeleton.ServiceName.UnitTest.Business
     {
         private readonly IUserRepository _repositoryMock;
         private readonly IAccessManager _accessManagerMock;
+        private readonly IUserValidationService _userValidationServiceMock;
 
         private readonly UserService _userService;
 
@@ -34,7 +38,8 @@ namespace Skeleton.ServiceName.UnitTest.Business
 
             _repositoryMock = Substitute.For<IUserRepository>();
             _accessManagerMock = Substitute.For<IAccessManager>();
-            _userService = new UserService(_repositoryMock, _accessManagerMock, mapper);
+            _userValidationServiceMock = Substitute.For<IUserValidationService>();
+            _userService = new UserService(_repositoryMock, _accessManagerMock, _userValidationServiceMock, mapper);
         }
 
         #region Get
@@ -81,6 +86,7 @@ namespace Skeleton.ServiceName.UnitTest.Business
         {
             // Arrange
             var newViewFake = UserMock.NewMasterUserViewModel();
+            _userValidationServiceMock.ValidInsertAsync(newViewFake).Returns((true, new List<string>()));
 
             // Act
             var user = await _userService.InsertAsync(newViewFake);
@@ -88,31 +94,7 @@ namespace Skeleton.ServiceName.UnitTest.Business
             // Assert
             await _repositoryMock.Received().InsertAsync(Arg.Any<User>());
             Assert.IsType<UserViewModel>(user);
-        }
-
-        [Fact]
-        public async Task User_Insert_Error_EmailAlreadyExistsAsync()
-        {
-            // Arrange
-            var newViewFake = UserMock.NewSameEmailAdminUserViewModel();
-            var listFake = UserMock.ListUser().AsQueryable();
-
-            _repositoryMock.All.Returns(listFake);
-
-            // Act
-
-            // Assert
-            try
-            {
-                await _userService.InsertAsync(newViewFake);
-            }
-            catch (Exception ex)
-            {
-                Assert.Equal(Global.EmailAlreadyRegistered, ex.Message);
-            }
-
-            await _repositoryMock.DidNotReceive().InsertAsync(Arg.Any<User>());
-        }
+        }        
 
         [Fact]
         public async Task User_Insert_Error_PasswordDoesNotMatchAsync()
@@ -120,8 +102,7 @@ namespace Skeleton.ServiceName.UnitTest.Business
             // Arrange
             var newViewFake = UserMock.NewMasterUserViewModel();
 
-            newViewFake.Password = "123";
-            newViewFake.PasswordCheck = "321";
+            _userValidationServiceMock.ValidInsertAsync(newViewFake).Returns((false, new List<string> { Global.ValidationError }));
 
             // Act
 
@@ -130,9 +111,10 @@ namespace Skeleton.ServiceName.UnitTest.Business
             {
                 await _userService.InsertAsync(newViewFake);
             }
-            catch (Exception ex)
+            catch (BusinessRuleException ex)
             {
-                Assert.Equal(Global.PasswordDoesNotMatch, ex.Message);
+                var error = JsonConvert.DeserializeObject<ErrorResponse>(ex.Message);
+                Assert.Equal(Global.ValidationError, error.Message);
             }
             await _repositoryMock.DidNotReceive().InsertAsync(Arg.Any<User>());
         }
@@ -147,6 +129,7 @@ namespace Skeleton.ServiceName.UnitTest.Business
             var id = Guid.NewGuid();
             var fake = UserMock.GetMasterUser(id);
             var viewFake = UserMock.GetMasterUserViewModel(id);
+            _userValidationServiceMock.ValidUpdateAsync(viewFake).Returns((true, new List<string>()));
 
             viewFake.Name = "Alterou";
 
@@ -162,17 +145,15 @@ namespace Skeleton.ServiceName.UnitTest.Business
         }
 
         [Fact]
-        public async Task User_Update_Error_EmailAlreadyExistsAsync()
+        public async Task User_Update_Error_ValidationAsync()
         {
             // Arrange
             var id = Guid.NewGuid();
             var newFake = UserMock.GetMasterUser(id);
             var newViewFake = UserMock.GetMasterUserViewModel(id);
 
-            var listFake = UserMock.ListUser().AsQueryable();
+            _userValidationServiceMock.ValidUpdateAsync(newViewFake).Returns((false, new List<string> { Global.ValidationError }));
             _repositoryMock.FindNoTrackingAsync(id).Returns(newFake);
-
-            _repositoryMock.All.Returns(listFake);
 
             // Act
 
@@ -181,9 +162,10 @@ namespace Skeleton.ServiceName.UnitTest.Business
             {
                 await _userService.UpdateAsync(newViewFake);
             }
-            catch (Exception ex)
+            catch (BusinessRuleException ex)
             {
-                Assert.Equal(Global.EmailAlreadyRegistered, ex.Message);
+                var error = JsonConvert.DeserializeObject<ErrorResponse>(ex.Message);
+                Assert.Equal(Global.ValidationError, error.Message);
             }
 
             await _repositoryMock.DidNotReceive().UpdateAsync(newFake);

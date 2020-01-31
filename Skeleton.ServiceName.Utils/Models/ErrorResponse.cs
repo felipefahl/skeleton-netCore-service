@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Linq;
 using Skeleton.ServiceName.Utils.Resources;
+using System.Collections.Generic;
 
 namespace Skeleton.ServiceName.Utils.Models
 {
@@ -22,6 +23,16 @@ namespace Skeleton.ServiceName.Utils.Models
                 Success = false,
                 Message = e.Message,
                 InnerError = ErrorResponse.From(e.InnerException)
+            };
+        }
+
+        public static ErrorResponse FromBusinessRules(string message, IList<string> errors)
+        {
+            return new ErrorResponse
+            {
+                Success = false,
+                Message = message,
+                Details = errors.ToArray(),
             };
         }
 

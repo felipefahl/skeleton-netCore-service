@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -40,7 +41,6 @@ namespace Skeleton.ServiceName.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            //services.AddApplicationInsightsTelemetry(Configuration);
 
             // Auto Mapper Configurations
             var mappingConfig = new MapperConfiguration(mc =>
@@ -53,9 +53,12 @@ namespace Skeleton.ServiceName.API
 
             services.AddLocalization(options => options.ResourcesPath = "../Skeleton.ServiceName.Utils/Resources");
 
+            var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             services.AddMvc()
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
-                .AddDataAnnotationsLocalization();
+                .AddDataAnnotationsLocalization()
+                .AddFluentValidation(fvc =>
+                            fvc.RegisterValidatorsFromAssembly(Assembly.LoadFrom(Path.Combine(assemblyPath, "Skeleton.ServiceName.ViewModel.dll"))));
 
             services.AddControllers()
                 .AddNewtonsoftJson()

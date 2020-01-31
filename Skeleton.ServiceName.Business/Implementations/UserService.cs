@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Skeleton.ServiceName.Business.Interfaces;
+using Skeleton.ServiceName.Business.Interfaces.Validations;
 using Skeleton.ServiceName.Data.Interfaces;
 using Skeleton.ServiceName.Data.Models;
 using Skeleton.ServiceName.Utils.EfExtensions;
+using Skeleton.ServiceName.Utils.Exceptions;
 using Skeleton.ServiceName.Utils.Helpers;
+using Skeleton.ServiceName.Utils.Models;
 using Skeleton.ServiceName.Utils.Resources;
 using Skeleton.ServiceName.Utils.Security;
 using Skeleton.ServiceName.ViewModel.Authentication;
@@ -20,54 +23,53 @@ namespace Skeleton.ServiceName.Business.Implementations
         private new readonly IUserRepository _repository;
 
         private readonly IAccessManager _accessManager;
+        private readonly IUserValidationService _userValidationService;
+
         public UserService(IUserRepository repository,
-                          IAccessManager accessManager, 
+                          IAccessManager accessManager,
+                          IUserValidationService userValidationService,
                           IMapper mapper) : base(repository, mapper)
         {
             _repository = repository;
             _accessManager = accessManager;
+            _userValidationService = userValidationService;
         }
 
         private async Task<UserViewModel> PreInsertAsync(UserViewModel model)
         {
-            if (!PasswordHelper.Compare(model.Password, model.PasswordCheck))
-                throw new Exception(Global.PasswordDoesNotMatch);
-
             var hash = PasswordHelper.Hash(model.Password);
-
             model.Password = hash;
             model.PasswordCheck = hash;
+            return await PreSaveAsync(model);
+        }
 
+        private async Task<UserViewModel> PreUpdateAsync(UserViewModel model)
+        {
             return await PreSaveAsync(model);
         }
 
         private async Task<UserViewModel> PreSaveAsync(UserViewModel model)
         {
-            await Valid(model);
-
-            return model;
-        }
-
-        private async Task Valid(UserViewModel model)
-        {
-
-            var user = await _repository
-                .All
-                .Where(x => x.Email == model.Email)
-                .Where(x => x.Id != model.Id)
-                .ToListAsyncSafe();
-
-            if (user.Any())
-                throw new Exception(Global.EmailAlreadyRegistered);
+            return await Task.FromResult(model);
         }
 
         public override async Task<UserViewModel> InsertAsync(UserViewModel model)
         {
+            var valid = await _userValidationService.ValidInsertAsync(model);
+
+            if (!valid.success)
+                throw new BusinessRuleException(ErrorResponse.FromBusinessRules(Global.ValidationError, valid.errors));
+
             return await base.InsertAsync(await PreInsertAsync(model));
         }
 
         public override async Task<UserViewModel> UpdateAsync(UserViewModel model)
         {
+            var valid = await _userValidationService.ValidUpdateAsync(model);
+
+            if (!valid.success)
+                throw new BusinessRuleException(ErrorResponse.FromBusinessRules(Global.ValidationError, valid.errors));
+
             var entity = await _repository.FindNoTrackingAsync((Guid)model.Id);
             var userModel = _mapper.Map<User, UserViewModel>(entity);
 
@@ -75,7 +77,7 @@ namespace Skeleton.ServiceName.Business.Implementations
             userModel.Email = model.Email;
             userModel.Profile = model.Profile;
 
-            return await base.UpdateAsync(await PreSaveAsync(userModel));
+            return await base.UpdateAsync(await PreUpdateAsync(userModel));
         }
 
         public async Task<LoginResponseViewModel> LoginAsync(LoginViewModel model)
@@ -85,7 +87,7 @@ namespace Skeleton.ServiceName.Business.Implementations
 
             var response = new LoginResponseViewModel();
 
-            if (user == null || !ValidateCredentials(user.Password, model.Password))
+            if (user == null || !CheckCredentials(user.Password, model.Password))
             {
                 response.Success = false;
                 response.Message = Global.EmailAndPasswordInvalid;
@@ -104,7 +106,7 @@ namespace Skeleton.ServiceName.Business.Implementations
             return response;
         }
 
-        public bool ValidateCredentials(string hashedPassword, string password)
+        public bool CheckCredentials(string hashedPassword, string password)
         {
             return PasswordHelper.Verify(hashedPassword, password);
         }

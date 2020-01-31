@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Skeleton.ServiceName.Utils.Exceptions;
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
 namespace Skeleton.ServiceName.Utils.Middlewares
@@ -41,7 +40,7 @@ namespace Skeleton.ServiceName.Utils.Middlewares
 
                 return;
             }
-            catch (ValidationException ex)
+            catch (BusinessRuleException ex)
             {
                 if (context.Response.HasStarted)
                 {
@@ -51,7 +50,7 @@ namespace Skeleton.ServiceName.Utils.Middlewares
 
                 context.Response.Clear();
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                context.Response.ContentType = @"application/json";
+                context.Response.ContentType = ex.ContentType;
 
                 await context.Response.WriteAsync(ex.Message);
 

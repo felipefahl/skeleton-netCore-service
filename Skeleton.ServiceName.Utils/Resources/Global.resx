@@ -135,4 +135,13 @@
   <data name="EmailAndPasswordInvalid" xml:space="preserve">
     <value>Invalid email and password</value>
   </data>
+  <data name="GreaterThan" xml:space="preserve">
+    <value>{0} must be greater than {1}</value>
+  </data>
+  <data name="InvalidEmail" xml:space="preserve">
+    <value>Invalid email</value>
+  </data>
+  <data name="ValidationError" xml:space="preserve">
+    <value>Validation error</value>
+  </data>
 </root>
